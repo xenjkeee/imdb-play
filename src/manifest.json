@@ -11,13 +11,13 @@
   },
   "permissions": ["storage"],
   "options_ui": {
-    "page": "options.html",
+    "page": "options/options.html",
     "open_in_tab": false
   },
   "content_scripts": [
     {
       "matches": ["https://www.imdb.com/title/tt*"],
-      "js": ["content.js"],
+      "js": ["content/metadata.js", "content/ui.js", "content/main.js"],
       "run_at": "document_idle"
     }
   ]

@@ -38,10 +38,15 @@ The extension uses a multi-layered approach to understand page content:
 
 ```text
 imdb-play/
-├── icons/              # Extension icons
-├── manifest.json       # Extension configuration and permissions
-├── content.js          # Core logic for DOM injection and metadata scraping
-├── options.html        # Settings UI HTML
-├── options.js          # Settings UI logic
-└── GEMINI.md           # Documentation of functionality and architecture
+├── src/
+│   ├── content/        # Content script logic
+│   │   ├── main.js     # Entry point & observer
+│   │   ├── metadata.js # Page data extraction
+│   │   └── ui.js       # Button injection
+│   ├── icons/          # Extension icons
+│   ├── options/        # Options page
+│   │   ├── options.html
+│   │   └── options.js
+│   └── manifest.json   # Extension configuration
+└── README.md           # Project documentation
 ```
