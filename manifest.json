@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "imdb-play",
+  "version": "1.0",
+  "description": "Injects movie and TV show playback links directly into IMDb pages.",
+  "icons": {
+    "16": "icons/16.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "permissions": ["storage"],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.imdb.com/title/tt*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
