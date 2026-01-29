@@ -2,6 +2,29 @@
 
 A Chrome extension that injects movie and TV show playback links directly into IMDb pages. It provides a seamless way to navigate from a title's metadata to an external viewer using a configurable provider URL.
 
+## Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone git@github.com:xenjkeee/imdb-play.git
+    ```
+2.  **Open Chrome Extensions:**
+    Navigate to `chrome://extensions/` in your browser.
+3.  **Enable Developer Mode:**
+    Toggle the switch in the top-right corner.
+4.  **Load the extension:**
+    Click **"Load unpacked"** and select the `src` folder within this project directory.
+
+## Usage
+
+1.  **Set Provider URL:**
+    *   Right-click the extension icon and select **Options**.
+    *   Enter your preferred provider base URL (Default is `https://vsrc.su/`).
+2.  **Browse IMDb:**
+    *   **Movies:** Click the "Play Movie" button injected below the title.
+    *   **TV Series:** Enter Season/Episode numbers and click "Play Episode".
+    *   **TV Episodes:** The extension automatically detects the correct episode and updates your progress for the series.
+
 ## Core Features
 
 ### 1. Context-Aware Injection
