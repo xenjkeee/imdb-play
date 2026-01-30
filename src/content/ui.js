@@ -67,8 +67,9 @@ function injectButton() {
             const savedProgress = items[`progress_${metadata.currentId}`] || { season: 1, episode: 1 };
             
             const inputStyle = `
-                width: 50px; 
+                width: 70px; 
                 padding: 6px; 
+                box-sizing: border-box;
                 border-radius: 4px; 
                 border: 1px solid #333; 
                 background: #1f1f1f; 
