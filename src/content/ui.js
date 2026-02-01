@@ -1,9 +1,17 @@
-function createButton(text, icon = null) {
+function createButton(text, icon = null, isSplitLeft = false) {
     const button = document.createElement('button');
     // Mimic IMDb button classes
     button.className = 'ipc-btn ipc-btn--single-padding ipc-btn--center-align-content ipc-btn--default-height ipc-btn--core-accent1 ipc-btn--theme-base ipc-btn--on-accent2';
-    button.style.position = 'relative'; // For dropdown positioning
+    button.style.position = 'relative'; 
     
+    // Split button styling
+    if (isSplitLeft) {
+        button.style.borderTopRightRadius = '0';
+        button.style.borderBottomRightRadius = '0';
+        button.style.borderRight = '1px solid rgba(0,0,0,0.2)'; // Dark separator
+        button.style.marginRight = '0';
+    }
+
     let html = `<span class="ipc-btn__text">${text}</span>`;
     if (icon) {
         html += `<span style="margin-left: 8px; font-size: 0.8em;">${icon}</span>`;
@@ -12,46 +20,69 @@ function createButton(text, icon = null) {
     return button;
 }
 
-function createDropdown(providers, currentIndex, onSelect) {
+function createDropdown(providers, currentIndex, onSelect, isSplitRight = false) {
     const container = document.createElement('div');
     container.style.position = 'relative';
-    container.style.display = 'inline-block';
+    container.style.display = 'inline-flex'; // Ensures height matches
 
-    // The trigger button (small arrow)
+    // The trigger button (arrow)
     const trigger = document.createElement('button');
     trigger.className = 'ipc-btn ipc-btn--single-padding ipc-btn--center-align-content ipc-btn--default-height ipc-btn--core-accent1 ipc-btn--theme-base ipc-btn--on-accent2';
-    trigger.style.marginLeft = '2px';
-    trigger.style.padding = '0 8px';
-    trigger.innerHTML = '▼';
+    trigger.style.padding = '0 12px'; // Tighter padding for the arrow
+    
+    // Split styling
+    if (isSplitRight) {
+        trigger.style.borderTopLeftRadius = '0';
+        trigger.style.borderBottomLeftRadius = '0';
+        trigger.style.marginLeft = '0';
+    }
+
+    // Icon (Chevron Down)
+    trigger.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="ipc-icon ipc-icon--arrow-drop-down" style="width: 1rem; height: 1rem;">
+            <path d="M7 10l5 5 5-5z"></path>
+        </svg>
+    `;
     
     // The menu (hidden by default)
     const menu = document.createElement('div');
     menu.style.display = 'none';
     menu.style.position = 'absolute';
     menu.style.top = '100%';
-    menu.style.left = '0';
-    menu.style.minWidth = '150px';
+    menu.style.right = '0'; // Align to right edge of trigger
+    menu.style.minWidth = '200px';
     menu.style.backgroundColor = '#1f1f1f';
     menu.style.border = '1px solid #333';
     menu.style.borderRadius = '4px';
-    menu.style.boxShadow = '0 4px 12px rgba(0,0,0,0.5)';
+    menu.style.boxShadow = '0 4px 12px rgba(0,0,0,0.7)';
     menu.style.zIndex = '1000';
     menu.style.marginTop = '4px';
+    menu.style.overflow = 'hidden'; // For corner radius
 
     // Populate menu
     providers.forEach((p, index) => {
         if (!p.enabled || index === currentIndex) return;
 
         const item = document.createElement('div');
-        item.textContent = p.name;
-        item.style.padding = '8px 12px';
+        item.style.padding = '12px 16px';
         item.style.cursor = 'pointer';
-        item.style.color = 'white';
-        item.style.fontSize = '14px';
-        item.style.borderBottom = '1px solid #333';
+        item.style.color = '#e1e1e1';
+        item.style.fontSize = '14px'; // Matches IMDb standard
+        item.style.fontFamily = 'Roboto, Helvetica, Arial, sans-serif';
+        item.style.display = 'flex';
+        item.style.flexDirection = 'column';
+        item.style.borderBottom = '1px solid #2a2a2a';
+        item.style.transition = 'background-color 0.1s ease';
 
-        item.addEventListener('mouseover', () => item.style.backgroundColor = '#333');
-        item.addEventListener('mouseout', () => item.style.backgroundColor = 'transparent');
+        // Content
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = p.name;
+        nameSpan.style.fontWeight = '500';
+        item.appendChild(nameSpan);
+
+        // Hover effect
+        item.addEventListener('mouseenter', () => item.style.backgroundColor = '#333');
+        item.addEventListener('mouseleave', () => item.style.backgroundColor = 'transparent');
         
         item.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -62,11 +93,19 @@ function createDropdown(providers, currentIndex, onSelect) {
         menu.appendChild(item);
     });
 
+    // Remove border from last item
+    if (menu.lastChild) menu.lastChild.style.borderBottom = 'none';
+
     // Toggle logic
     trigger.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        const isVisible = menu.style.display === 'block';
+        
+        // Hide all other open dropdowns first (if we had multiple)
+        document.querySelectorAll('.imdb-play-dropdown-menu').forEach(el => el.style.display = 'none');
+        
+        menu.style.display = isVisible ? 'none' : 'block';
     });
 
     // Close on outside click
@@ -74,6 +113,7 @@ function createDropdown(providers, currentIndex, onSelect) {
         menu.style.display = 'none';
     });
 
+    menu.className = 'imdb-play-dropdown-menu'; // Class for global closing logic
     container.appendChild(trigger);
     container.appendChild(menu);
     
@@ -111,10 +151,8 @@ function injectButton() {
     const keysToFetch = ['providers', 'defaultProviderIndex'];
     if (progressKey) keysToFetch.push(progressKey);
 
-    // Using chrome.storage.sync directly here to fetch progress + config together 
-    // (loadProviders wrapper is async but we need progress too, mixing them is fine)
     chrome.storage.sync.get(keysToFetch, (items) => {
-        // Init Providers (logic copied from loadProviders to save a callback)
+        // Init Providers
         let providers = items.providers;
         let defaultIndex = items.defaultProviderIndex;
 
@@ -149,6 +187,16 @@ function injectButton() {
 
         // --- RENDER LOGIC ---
 
+        const otherProviders = providers.filter((p, i) => p.enabled && i !== defaultIndex);
+        const hasDropdown = otherProviders.length > 0;
+
+        // Wrapper for the split button
+        const buttonGroup = document.createElement('div');
+        buttonGroup.style.display = 'flex';
+        buttonGroup.style.alignItems = 'stretch'; // Ensure equal height
+
+        let mainBtnText = 'Play Movie';
+
         if (metadata.type === 'TVSeries') {
             // === SERIES PAGE ===
             const savedProgress = items[progressKey] || { season: 1, episode: 1 };
@@ -163,53 +211,42 @@ function injectButton() {
                 color: white; 
                 text-align: center;
                 font-weight: bold;
+                font-size: 14px;
             `;
 
             container.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 4px; color: #fff;">
+                <div style="display: flex; align-items: center; gap: 4px; color: #fff; margin-right: 4px;">
                     <span style="font-size: 0.9em; opacity: 0.8;">S:</span>
                     <input type="number" id="imdb-play-season" min="1" value="${savedProgress.season}" style="${inputStyle}">
                 </div>
-                <div style="display: flex; align-items: center; gap: 4px; color: #fff;">
+                <div style="display: flex; align-items: center; gap: 4px; color: #fff; margin-right: 8px;">
                     <span style="font-size: 0.9em; opacity: 0.8;">E:</span>
                     <input type="number" id="imdb-play-episode" min="1" value="${savedProgress.episode}" style="${inputStyle}">
                 </div>
             `;
-            
-            const playBtn = createButton('Play Episode');
-            playBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                handlePlay(defaultProvider);
-            });
-            container.appendChild(playBtn);
+            mainBtnText = 'Play Episode';
 
         } else if (metadata.type === 'TVEpisode') {
-            // === EPISODE PAGE ===
-            const playBtn = createButton(`Play S${metadata.season}:E${metadata.episode}`);
-            playBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                handlePlay(defaultProvider);
-            });
-            container.appendChild(playBtn);
-        } else {
-            // === MOVIE PAGE ===
-            const playBtn = createButton('Play Movie');
-            playBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                handlePlay(defaultProvider);
-            });
-            container.appendChild(playBtn);
+            mainBtnText = `Play S${metadata.season}:E${metadata.episode}`;
         }
 
-        // === DROPDOWN (If there are other enabled providers) ===
-        const otherProviders = providers.filter((p, i) => p.enabled && i !== defaultIndex);
-        if (otherProviders.length > 0) {
+        // Create Main Button
+        const playBtn = createButton(mainBtnText, null, hasDropdown);
+        playBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handlePlay(defaultProvider);
+        });
+        buttonGroup.appendChild(playBtn);
+
+        // Create Dropdown (if needed)
+        if (hasDropdown) {
             const dropdown = createDropdown(providers, defaultIndex, (selectedProvider) => {
                 handlePlay(selectedProvider);
-            });
-            container.appendChild(dropdown);
+            }, true);
+            buttonGroup.appendChild(dropdown);
         }
 
+        container.appendChild(buttonGroup);
         titleElement.after(container);
     });
 }
